@@ -111,8 +111,8 @@ class NatLogo(Widget3D):
                 
         self.size_logo = kwargs.get('size_logo')
                 
-        self.wline1 = 1.5
-        self.wline2 = 1.2
+        self.wline1 = 1.3
+        self.wline2 = 1.1
         
         self.xsep = self.size_logo[0]/6
         self.ysize = self.size_logo[1]
@@ -126,7 +126,7 @@ class NatLogo(Widget3D):
             self.draw_nat(self.xsep, self.ysize, self.wline2)
         '''
         
-        self.nat1 = NatLines(color=(1,0,0), 
+        self.nat1 = NatLines(color=(.3,.3,1), 
                                 xsep=self.xsep, 
                                 ysize=self.ysize, 
                                 wline=self.wline1, 
@@ -145,6 +145,8 @@ class NatLogo(Widget3D):
         #self.reanimate(None, 0)
         
     def animate(self):
+        
+        return
         
         self.canvas.clear()
         
