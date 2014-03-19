@@ -3,39 +3,68 @@
 
 from kivy.uix.widget import Widget
 from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.anchorlayout import AnchorLayout
 from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.stencilview import StencilView
+from kivy.uix.button import Button
+from kivy.uix.colorpicker import ColorPicker
+from kivy.uix.slider import Slider
+from kivy.uix.scatterlayout import ScatterLayout
+from kivy.uix.popup import Popup
 
-
-from kivy.animation import Animation
-from kivy.properties import NumericProperty
-
-from widget3D import Widget3D, ZoomLayout3D
 
 from kivy.graphics import *
 
-class NatLines(Widget3D):
+class NatLines(Widget):
     
     def __init__(self, **kwargs):
         super(NatLines, self).__init__(**kwargs)
         
-        self.color = kwargs.get('color')
-        self.xsep = kwargs.get('xsep')
-        self.ysize = kwargs.get('ysize')
-        self.wline = kwargs.get('wline')
+        self.color1 = kwargs.get('color1')
+        self.color2 = kwargs.get('color2')
+        self.xsep = self.width/6 
+        self.ysize = self.height
+        self.wline1 = kwargs.get('wline1')
+        self.wline2 = kwargs.get('wline2')
+            
+        self.mydraw()
+            
+    def mydraw(self):
+        
+        print 'drawcolor1', self.color1
+        print 'drawcolor2', self.color2
+        
+        #determinar cual linea es mas gruesa
+        if self.wline1 > self.wline2:
+            self.majorline = self.wline1
+        else:
+            self.majorline = self.wline2
+            
+        self.canvas.clear()
+        
+        if hasattr(self, 'fbo'):
+            self.fbo.clear()
 
         with self.canvas:
-            Color(self.color[0], self.color[1], self.color[2] ,1)
-            self.draw_nat(self.xsep, self.ysize, self.wline)
+            self.fbo = Fbo(size=(self.width+(self.majorline*2), (self.height+self.majorline*2) ) )
+            Rectangle(size=self.size, texture=self.fbo.texture)
+        
+        
+        with self.fbo:
+            Color(self.color1[0], self.color1[1], self.color1[2] ,1)
+            self.draw_nat(self.xsep, self.ysize, self.wline1)
+            
+            Color(self.color2[0], self.color2[1], self.color2[2] ,1)
+            self.draw_nat(self.xsep, self.ysize, self.wline2)
 
-      
+    def save(self, filename):
+        self.fbo.texture.save(filename)
+        
     def draw_nat(self, xsep, ysize, linewidth=1):
         
-        lowsep = .2
-        #x = self.x
-        x = 0
-        #y = self.y
-        y = 0
+        steps = 20
+        lowsep = .15
+        x = self.x + self.majorline
+        y = self.y + self.majorline
         
         Line(points=[x, y, 
                         x + xsep, y, 
@@ -46,30 +75,31 @@ class NatLines(Widget3D):
                 
                         
         #arc
-        Line(points=self.arc(x + xsep*2.5, y + ysize*lowsep, -(xsep/2) , 20), width=linewidth)
-        Line(points=self.arc(x + xsep*2.5, y + ysize*lowsep, xsep/2, 20), width=linewidth)
+        Line(points=self.arc(x + xsep*2.5, y + ysize*lowsep, -(xsep/2) , steps, -1), width=linewidth)
+        Line(points=self.arc(x + xsep*2.5, y + ysize*lowsep, xsep/2, steps, -1), width=linewidth)
                         
         Line(points=[x + xsep*3, y + ysize*lowsep, x + xsep*3, y + ysize-ysize*lowsep], width=linewidth)
         
         
         #arc
-        Line(points=self.invarc(x + xsep*3.5, y + ysize-ysize*lowsep, -(xsep/2), 20), width=linewidth)
-        Line(points=self.invarc(x + xsep*3.5, y + ysize-ysize*lowsep, xsep/2, 20), width=linewidth)
+        Line(points=self.arc(x + xsep*3.5, y + ysize-ysize*lowsep, -(xsep/2), steps, 1), width=linewidth)
+        Line(points=self.arc(x + xsep*3.5, y + ysize-ysize*lowsep, xsep/2, steps, 1), width=linewidth)
             
                 
         Line(points=[x + xsep*4, y + ysize-ysize*lowsep, x + xsep*4, y + ysize*lowsep], width=linewidth)
         
         #arc
-        Line(points=self.arc(x + xsep*4.5, y + ysize*lowsep ,-(xsep/2), 20), width=linewidth)
-        Line(points=self.arc(x + xsep*4.5, y + ysize*lowsep ,xsep/2, 20), width=linewidth)
+        Line(points=self.arc(x + xsep*4.5, y + ysize*lowsep ,-(xsep/2), steps, -1), width=linewidth)
+        Line(points=self.arc(x + xsep*4.5, y + ysize*lowsep ,xsep/2, steps, -1), width=linewidth)
                 
         Line(points=[x + xsep*5, y + ysize*lowsep, x + xsep*5, y + ysize, x + xsep*6, y + ysize], width=linewidth)
         
                             
-    def arc(self, x, y, r, steps):
+    def arc(self, x, y, r, steps, updir):
         '''
-        Circle without PI
+        Points of arc calculated without PI or trigonometry maths
         
+        Ecuations for calculate points of circle
         x = sqrt ( r² - y² )
         y = sqrt ( r² - x² )
         '''
@@ -79,190 +109,78 @@ class NatLines(Widget3D):
             x2 = r * (float(i)/steps)
             y2 = (r**2 - x2**2) ** .5
             points.append(x2+x)
-            points.append(-y2+y)
-            
-        return points
-        
-    def invarc(self, x, y, r, steps):
-        '''
-        Circle without PI
-        
-        x = sqrt ( r² - y² )
-        y = sqrt ( r² - x² )
-        '''
-        points = []
-        
-        for i in range(0, steps+1):
-            x2 = r * (float(i)/steps)
-            y2 = (r**2 - x2**2) ** .5
-            points.append(x2+x)
-            points.append(y2+y)
+            points.append((y2*updir)+y)
             
         return points
 
-
-
-class NatLogo(Widget3D):
-    
-    lastpoint = NumericProperty(0)
+class NatLogo(FloatLayout):
     
     def __init__(self, **kwargs):
         super(NatLogo, self).__init__(**kwargs)
-                
-        self.size_logo = kwargs.get('size_logo')
-                
-        self.wline1 = 1.3
-        self.wline2 = 1.1
         
-        self.xsep = self.size_logo[0]/6
-        self.ysize = self.size_logo[1]
-                
-        '''
-        with self.canvas:
-            Color(1,0,0,1)
-            self.draw_nat(self.xsep, self.ysize, self.wline1)
-            
-            Color(.5,.5,.5,1)
-            self.draw_nat(self.xsep, self.ysize, self.wline2)
-        '''
+        self.nat = NatLines(size=(500,300), 
+                                color1=(1,1,1), wline1=8,
+                                color2=(0,0,1), wline2=3
+                                )
+                                
+        self.add_widget(self.nat)
         
-        self.nat1 = NatLines(color=(.3,.3,1), 
-                                xsep=self.xsep, 
-                                ysize=self.ysize, 
-                                wline=self.wline1, 
-                                scale3D=(.5, .5, 1) )
+        
+        #layout superior de controles
+        self.lay_upper = AnchorLayout(anchor_x='center', anchor_y='top')
+        
+        self.layout = BoxLayout(orientation='vertical', size_hint=(None,None), size=(300,400), opacity=.8)
+        
 
-        self.add_widget(self.nat1)
+        #SELECCION DE COLOR
+        self.cp_color = ColorPicker(size_hint_y=5)
         
-        self.nat2 = NatLines(color=(.5, .5, .5), 
-                                xsep=self.xsep, 
-                                ysize=self.ysize, 
-                                wline=self.wline2, 
-                                scale3D=(.5, .5, 1) )
+        self.btn_line1 = Button(text='Color Linea 1', on_press=self.configcolor1)
+        self.sld_line1 = Slider(value=8, min=1, max=20)
+        self.sld_line1.bind(value=self.on_wline1)
+        
+        self.btn_line2 = Button(text='Color Linea 2', on_press=self.configcolor2)
+        self.sld_line2 = Slider(value=3, min=1, max=10)
+        self.sld_line2.bind(value=self.on_wline2)
+        
+        
+        self.btn_save = Button(text='Guardar logotipo', on_press=self.save_natlogo)
+        
+        self.layout.add_widget(self.btn_line1)
+        self.layout.add_widget(self.sld_line1)
+        self.layout.add_widget(self.btn_line2)
+        self.layout.add_widget(self.sld_line2)
+        self.layout.add_widget(self.btn_save)
+        self.layout.add_widget(self.cp_color)
+        
+        self.lay_upper.add_widget(self.layout)
+        self.add_widget(self.lay_upper)
+        
+    def configcolor1(self, w):
+        self.nat.color1 = self.cp_color.color
+        print 'color 1', self.nat.color1
+        print 'color 2', self.nat.color2
+        self.nat.mydraw()
+        
+    def configcolor2(self, w):
+        self.nat.color2 = self.cp_color.color
+        print '2color 1', self.nat.color1
+        print '2color 2', self.nat.color2
+        self.nat.mydraw()
+        
+    def save_natlogo(self, w):
+        self.nat.save('nat-logo.png')
+        
+    def on_wline1(self, w, val):
+        self.nat.wline1 = val
+        self.nat.mydraw()
 
-        self.add_widget(self.nat2)
-
-        #self.reanimate(None, 0)
+    def on_wline2(self, w, val):
+        self.nat.wline2 = val
+        self.nat.mydraw()
         
-    def animate(self):
-        
-        return
-        
-        self.canvas.clear()
-        
-        with self.canvas:
-            Color(1,0,0,1)
-            self.draw_nat(self.xsep, self.ysize, self.wline1)
-            self.end_line1 = Line(points=[self.xsep*6, self.ysize, self.xsep*6, self.ysize], width=self.wline1)
-            
-            Color(.5,.5,.5,1)
-            self.draw_nat(self.xsep, self.ysize, self.wline2)
-            self.end_line2 = Line(points=[self.xsep*6, self.ysize, self.xsep*6, self.ysize], width=self.wline2)
-            
-        #init the line that complete the nat wave form
-        self.lastpoint = self.ysize
-        anim_lastpoint = Animation(lastpoint=0, duration=.5)
-        anim_lastpoint.bind(on_complete=self.init_wave_move)
-        anim_lastpoint.start(self)
-        
-    def on_lastpoint(self, w, val):
-        self.end_line1.points = [self.x + self.xsep*6, self.y + self.ysize, self.x + self.xsep*6, self.y + val]
-        self.end_line2.points = [self.x + self.xsep*6, self.y + self.ysize, self.x + self.xsep*6, self.y + val]
-        
-    def init_wave_move(self, w, dt):
-        print 'init wave'
-        Animation(x=-self.width, duration=1).start(self)
-        
-        
-    def reanimate(self, w, val):
-        self.rotate_z = 0
-        
-        anim = Animation(rotate_z=360, duration=3)
-        
-        anim.bind(on_complete=self.reanimate)
-        anim.start(self)
-            
-    def draw_nat(self, xsep, ysize, linewidth=1):
-        
-        lowsep = .2
-        #x = self.x
-        x = 0
-        #y = self.y
-        y = 0
-        
-        Line(points=[x, y, 
-                        x + xsep, y, 
-                        x + xsep, y + ysize, 
-                        x + xsep*2, y + ysize, 
-                        x + xsep*2, y + ysize*lowsep,
-                        ], width=linewidth)
-                
-                        
-        #arc
-        Line(points=self.arc(x + xsep*2.5, y + ysize*lowsep, -(xsep/2) , 20), width=linewidth)
-        Line(points=self.arc(x + xsep*2.5, y + ysize*lowsep, xsep/2, 20), width=linewidth)
-                        
-        Line(points=[x + xsep*3, y + ysize*lowsep, x + xsep*3, y + ysize-ysize*lowsep], width=linewidth)
-        
-        
-        #arc
-        Line(points=self.invarc(x + xsep*3.5, y + ysize-ysize*lowsep, -(xsep/2), 20), width=linewidth)
-        Line(points=self.invarc(x + xsep*3.5, y + ysize-ysize*lowsep, xsep/2, 20), width=linewidth)
-            
-                
-        Line(points=[x + xsep*4, y + ysize-ysize*lowsep, x + xsep*4, y + ysize*lowsep], width=linewidth)
-        
-        #arc
-        Line(points=self.arc(x + xsep*4.5, y + ysize*lowsep ,-(xsep/2), 20), width=linewidth)
-        Line(points=self.arc(x + xsep*4.5, y + ysize*lowsep ,xsep/2, 20), width=linewidth)
-                
-        Line(points=[x + xsep*5, y + ysize*lowsep, x + xsep*5, y + ysize, x + xsep*6, y + ysize], width=linewidth)
-        
-                            
-    def arc(self, x, y, r, steps):
-        '''
-        Circle without PI
-        
-        x = sqrt ( r² - y² )
-        y = sqrt ( r² - x² )
-        '''
-        points = []
-        
-        for i in range(0, steps+1):
-            x2 = r * (float(i)/steps)
-            y2 = (r**2 - x2**2) ** .5
-            points.append(x2+x)
-            points.append(-y2+y)
-            
-        return points
-        
-    def invarc(self, x, y, r, steps):
-        '''
-        Circle without PI
-        
-        x = sqrt ( r² - y² )
-        y = sqrt ( r² - x² )
-        '''
-        points = []
-        
-        for i in range(0, steps+1):
-            x2 = r * (float(i)/steps)
-            y2 = (r**2 - x2**2) ** .5
-            points.append(x2+x)
-            points.append(y2+y)
-            
-        return points
-
-
 if __name__ == '__main__':
     from kivy.base import runTouchApp
+    from kivy.core.window import Window
     
-    lay = BoxLayout()
-    '''
-    lay_zoom = ZoomLayout3D()    
-    lay_zoom.add_widget(NatLogo() )
-    
-    lay.add_widget(lay_zoom)
-    '''
     runTouchApp(NatLogo())
-    #runTouchApp(lay)

@@ -25,7 +25,7 @@ class Login(BoxLayout):
         self.txt_user = TextInput(text='Usuario')
         self.add_widget(self.txt_user)
         
-        self.txt_pass = TextInput(text='Contraseña')
+        self.txt_pass = TextInput(text='Password')
         self.add_widget(self.txt_pass)
         
         self.btn_iniciar_sesion = Button(text='Iniciar sesión')
