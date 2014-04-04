@@ -42,8 +42,9 @@ class SitesolServer(FloatLayout):
         if data_dict['msg'] == 'ping':
             tosend = json.dumps({'msg':'ping_ack', 'data':socket.gethostname()})
             self.net.send(addr, tosend)
-        elif data_dict['msg'] == 'get_inet_addr':
-            pass
+        elif data_dict['msg'] == 'get_inet_addr':            
+            tosend = json.dumps({'msg':'addr_udp', 'data':json.dumps(addr)})
+            self.net.send(addr, tosend)
             
             
             
