@@ -10,7 +10,7 @@ if( isset( $_GET['set_server_ip'] ) )
 else if( isset( $_GET['get_server_ip']) )
 {
   $f = fopen('sitesol_server.txt', 'r');
-  $ip = fread($f);
+  $ip = fread($f, filesize('sitesol_server.txt'));
   echo $ip;
 }
 
