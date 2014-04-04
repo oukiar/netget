@@ -17,9 +17,8 @@ class Sitesol(FloatLAyout):
             self.net.create_connection(self.receiver)
         
         #obtener ip del servidor que resuelve tu ip:puerto de internet
-        r = urllib.urlopen('http://www.devsinc.com.mx/netget/solvers.php?solveip=foo')
-        
-        self.server = 
+        r = urllib.urlopen('http://www.devsinc.com.mx/netget/solvers.php?get_server_ip=foo')
+        self.server = self.server_ip = r.read()
         
         #guardar nuestra informacion de conexion respecto a internet
         self.inet_ip = 
