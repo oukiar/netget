@@ -6,7 +6,6 @@ from kivy.uix.textinput import TextInput
 from kivy.uix.button import Button
 
 from network import Network
-from database import Database
 
 import json, socket, urllib, os
 
@@ -33,7 +32,7 @@ class SitesolServer(FloatLayout):
         #unpack
         data_dict = json.loads(data)
         
-        self.txt_log.text += '\nMessage: ' + data_dict['msg']
+        self.txt_log.text += '\nMessage: ' + data_dict['msg'] + ' from ' + addr[0] + ':' + str(addr[1])
         
         
         data = data_dict['data']
@@ -46,5 +45,11 @@ class SitesolServer(FloatLayout):
             tosend = json.dumps({'msg':'addr_udp', 'data':json.dumps(addr)})
             self.net.send(addr, tosend)
             
-            
+if __name__ == '__main__':
+    from kivy.base import runTouchApp
+    
+    
+    server = SitesolServer()
+    runTouchApp(server)
+    server.net.shutdown_network()
             
