@@ -16,4 +16,3 @@ else if( isset( $_GET['get_server_ip']) )
 
 
 ?>
-
