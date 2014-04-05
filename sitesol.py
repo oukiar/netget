@@ -109,7 +109,7 @@ class Sitesol(BoxLayout):
         self.net.send((self.txt_remote_ip.text, int(self.txt_remote_port.text)), tosend)
         
         
-        self.txt_messages.text += 'Enviado:\n' + self.txt_msg.text
+        self.txt_messages.text += '\nEnviado:\n' + self.txt_msg.text
         self.txt_msg.text = ''
         
          
@@ -136,7 +136,7 @@ class Sitesol(BoxLayout):
             self.txt_wan_port.text = str(port)
             
         elif data_dict['msg'] == 'message':
-            self.txt_messages.text += 'Recibido:\n' + data
+            self.txt_messages.text += '\nRecibido:\n' + data
             
             
                
